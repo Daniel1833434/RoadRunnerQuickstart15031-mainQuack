@@ -19,7 +19,7 @@ import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.drive.opmode.PidF;
 
-@TeleOp(name = "TeleOp11635")
+@TeleOp(name = "Best TeleOp11635")
 public class QuackAttackTeleOp11635 extends LinearOpMode{
     PidF pidController = new PidF();
 
