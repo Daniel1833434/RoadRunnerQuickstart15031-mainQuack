@@ -51,7 +51,7 @@ public class QuackAttackTeleOp11635 extends LinearOpMode{
                     )
             );
 
-            if (gamepad1.a){
+            if (gamepad1.right_trigger>0.4){
                 Intake.setPower(1);
                 Intake2.setPower(1);
             }
