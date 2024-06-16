@@ -45,7 +45,7 @@ public class QuackAttackTeleOp11635 extends LinearOpMode{
             drive.updatePoseEstimate();
             Pose2d poseEstimate = drive.getPoseEstimate();
             Vector2d input = new Vector2d(
-                    gamepad1.left_stick_y,
+                    -gamepad1.left_stick_y,
                     gamepad1.left_stick_x
             ).rotated(-poseEstimate.getHeading());
 
@@ -53,7 +53,7 @@ public class QuackAttackTeleOp11635 extends LinearOpMode{
                     new Pose2d(
                             input.getX(),
                             input.getY(),
-                            -gamepad1.right_stick_x
+                            gamepad1.right_stick_x
                     )
             );
 
