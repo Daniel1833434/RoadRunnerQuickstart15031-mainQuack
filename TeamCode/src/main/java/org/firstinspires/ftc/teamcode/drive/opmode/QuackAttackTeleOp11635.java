@@ -26,6 +26,8 @@ public class QuackAttackTeleOp11635 extends LinearOpMode{
     //PidF pidController = new PidF();
     @Override
     public void runOpMode(){
+        //Init//
+
         //pidController.BeforeInitPidf(800,1,1,1,0.05,"LinearSlide",1800,0);//all the vairables for the pidcontroller
         //pidController.InitPidf();//Init pidfcontroller
         DcMotor Intake = hardwareMap.get(DcMotor.class,"intake");
@@ -38,6 +40,7 @@ public class QuackAttackTeleOp11635 extends LinearOpMode{
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
         drive.setPoseEstimate(PoseStorage.currentPose);
 
+        //Init finished//
 
         waitForStart();
 
