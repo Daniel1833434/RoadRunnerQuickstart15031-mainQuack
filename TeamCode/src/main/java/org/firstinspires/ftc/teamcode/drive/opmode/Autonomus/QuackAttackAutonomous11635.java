@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.drive.opmode;
+package org.firstinspires.ftc.teamcode.drive.opmode.Autonomus;
 
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
 
@@ -14,12 +14,14 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.drive.opmode.PoseStorage;
+import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 
 @Autonomous(name = "Auto 1")
 public class QuackAttackAutonomous11635 extends LinearOpMode{
     @Override
     public void runOpMode(){
-
+        int counter =0;
         DcMotor Intake = hardwareMap.get(DcMotor.class,"IntakeMotor");
 
         Intake.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -41,6 +43,10 @@ public class QuackAttackAutonomous11635 extends LinearOpMode{
                 .forward(5)// target position
                 .build();
 
+        TrajectorySequence ts = drive.trajectorySequenceBuilder(SecondDrive.end())
+                .waitSeconds(3) // Waits 3 seconds
+                .build();
+
         Trajectory ThirdDrive = drive.trajectoryBuilder(SecondDrive.end())//last position
                 .lineToLinearHeading(new Pose2d(48,-35,Math.toRadians(270)))
                 .build();
@@ -52,24 +58,20 @@ public class QuackAttackAutonomous11635 extends LinearOpMode{
         Trajectory FifthDrive = drive.trajectoryBuilder(FourthDrive.end())
                 .forward(10)
                 .build();
+        //The actual run
 
         waitForStart();
-
         if (isStopRequested()) return;
-
-        //The actual run
         drive.followTrajectory(FirstDrive);//FirstDrive
         Intake.setPower(0.8);
         drive.followTrajectory(SecondDrive);//SecondDrive
-        sleep(1000);
+        drive.followTrajectorySequence(ts);//waits for 3 seconds
         Intake.setPower(0);
         drive.followTrajectory(ThirdDrive);//ThirdDrive
         drive.followTrajectory(FourthDrive);//FourthDrive
         drive.followTrajectory(FifthDrive);//FifthDrive
         drive.updatePoseEstimate();
-        PoseStorage.currentPose = drive.getPoseEstimate();//Transfer the pose to TeleOp
-        telemetry.addLine("AUTO is done");
-        telemetry.update();
+        PoseStorage.currentPose = drive.getPoseEstimate();//Transfer the pose to TeleOp;
 
 
     }
