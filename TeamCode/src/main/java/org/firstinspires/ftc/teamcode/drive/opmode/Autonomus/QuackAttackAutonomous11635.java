@@ -40,7 +40,8 @@ public class QuackAttackAutonomous11635 extends LinearOpMode{
 
 
         Trajectory SecondDrive = drive.trajectoryBuilder(FirstDrive.end())//last position
-                .forward(5)// target position
+                .forward(5,SampleMecanumDrive.getVelocityConstraint(10, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                        SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))// Makes the drive slower
                 .build();
 
         TrajectorySequence ts = drive.trajectorySequenceBuilder(SecondDrive.end())
@@ -64,7 +65,7 @@ public class QuackAttackAutonomous11635 extends LinearOpMode{
         if (isStopRequested()) return;
         drive.followTrajectory(FirstDrive);//FirstDrive
         Intake.setPower(0.8);
-        drive.followTrajectory(SecondDrive);//SecondDrive
+        drive.followTrajectory(SecondDrive);//SecondDrive is slower than other to pick pixels
         drive.followTrajectorySequence(ts);//waits for 3 seconds
         Intake.setPower(0);
         drive.followTrajectory(ThirdDrive);//ThirdDrive
