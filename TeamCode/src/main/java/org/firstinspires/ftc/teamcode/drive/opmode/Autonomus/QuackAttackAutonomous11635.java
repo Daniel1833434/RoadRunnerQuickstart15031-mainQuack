@@ -42,10 +42,18 @@ public class QuackAttackAutonomous11635 extends LinearOpMode{
         Trajectory SecondDrive = drive.trajectoryBuilder(FirstDrive.end())//last position
                 .forward(5,SampleMecanumDrive.getVelocityConstraint(10, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                         SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))// Makes the drive slower
+                .addTemporalMarker(0, () -> {
+                    // Run action at 0 second into the path
+                    Intake.setPower(1);
+                })
                 .build();
 
         TrajectorySequence ts = drive.trajectorySequenceBuilder(SecondDrive.end())
                 .waitSeconds(3) // Waits 3 seconds
+                .addTemporalMarker(3, () -> {
+                    // Run action at 3 second into the path
+                    Intake.setPower(0);
+                })
                 .build();
 
         Trajectory ThirdDrive = drive.trajectoryBuilder(SecondDrive.end())//last position
@@ -63,11 +71,9 @@ public class QuackAttackAutonomous11635 extends LinearOpMode{
 
         waitForStart();
         if (isStopRequested()) return;
-        drive.followTrajectory(FirstDrive);//FirstDrive
-        Intake.setPower(0.8);
+        drive.followTrajectory(FirstDrive);//FirstDrive and turn on intake motor after 1 second
         drive.followTrajectory(SecondDrive);//SecondDrive is slower than other to pick pixels
-        drive.followTrajectorySequence(ts);//waits for 3 seconds
-        Intake.setPower(0);
+        drive.followTrajectorySequence(ts);//waits for 3 seconds and stops intake motor
         drive.followTrajectory(ThirdDrive);//ThirdDrive
         drive.followTrajectory(FourthDrive);//FourthDrive
         drive.followTrajectory(FifthDrive);//FifthDrive
