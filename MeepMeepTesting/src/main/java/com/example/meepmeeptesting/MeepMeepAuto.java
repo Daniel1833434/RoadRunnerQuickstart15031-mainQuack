@@ -51,7 +51,7 @@ public class MeepMeepAuto {
                 .start();
     }
     private static RoadRunnerBotEntity Auto1(MeepMeep meepMeep){
-        double startheading = 90;//should always be 90 or 270
+        double startheading = 90;//should always be 90 or 270 but in real code shoud always be 0
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(MaxVel, MaxAccel, MaxAngVel,MaxAngAccel, TrackWidth)
