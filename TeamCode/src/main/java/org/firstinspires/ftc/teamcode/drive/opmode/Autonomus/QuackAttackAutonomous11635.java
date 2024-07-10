@@ -16,7 +16,7 @@ import org.firstinspires.ftc.teamcode.drive.opmode.PoseStorage;
 
 @Autonomous(name = "Auto1")
 public class QuackAttackAutonomous11635 extends LinearOpMode {
-
+    //TODO CHANGE THE STATES AS MUCH AS YOU NEED
     // This enum defines our "state"
     // This is essentially just defines the possible steps our program will take
     enum State {
@@ -33,14 +33,14 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
     // Default to IDLE
     State currentState = State.IDLE;
 
-    // Define our start pose
+    // TODO Define our start pose
     Pose2d startPose = new Pose2d(-40, -64, Math.toRadians(0));
 
     PID UP_LiftpidController = new PID();
     PID Down_LiftpidController = new PID();
     @Override
     public void runOpMode() throws InterruptedException {
-        // Initialize our lift and intake
+        //TODO Initialize our lift and intake
         UP_LiftpidController.BeforeInitPid(6000,1,1,1,"Lift",1800,0);//all the vairables for the pidcontroller
         UP_LiftpidController.InitPid();//Init pidcontroller
 
@@ -56,7 +56,7 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
         // Set inital pose
         drive.setPoseEstimate(startPose);
 
-        // Let's define our trajectories
+        //TODO Let's define our trajectories
         Trajectory trajectory1 = drive.trajectoryBuilder(startPose)
                 .splineTo(new Vector2d(-55, -35), Math.toRadians(90))
                 .build();
@@ -110,6 +110,7 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
 
             // We essentially define the flow of the state machine through this switch statement
             switch (currentState) {
+                //TODO ADJUST THE STATES AND THE ACTIONS IN IT
                 case TRAJECTORY_1:
                     // Check if the drive class isn't busy
                     // `isBusy() == true` while it's following the trajectory
