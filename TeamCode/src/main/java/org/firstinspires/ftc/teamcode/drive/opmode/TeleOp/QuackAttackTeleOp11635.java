@@ -12,7 +12,10 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.sfdev.assembly.state.StateMachineBuilder;
 
+import org.firstinspires.ftc.teamcode.drive.SubSystems.Intake;
+import org.firstinspires.ftc.teamcode.drive.SubSystems.Lift;
 import org.firstinspires.ftc.teamcode.drive.SubSystems.Robot;
 import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
@@ -26,10 +29,19 @@ import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.drive.opmode.PidF;
 import org.firstinspires.ftc.teamcode.drive.opmode.PoseStorage;
+import com.sfdev.assembly.state.*;
 
 @TeleOp(name = "Best TeleOp11635")
 public class QuackAttackTeleOp11635 extends LinearOpMode{
 
+    public enum States{
+        Idle, // pid for moving the lift is down and not intaking and dump reseted can Intake and can MoveLift
+        Intaking, // Start Intaking and pid for moving the lift down cant Move Lift(rt)
+        LiftingMid, // moving the lift to Middle and cant intake but can score(a)
+        LiftingUp, // moving the lift to Up and cant intake but can score(b)
+        Scroring //Dumping waiting a sec and going back to idle cant move lift or intake(y)
+
+    }
     Robot robot = new Robot();
     @Override
     public void runOpMode(){
@@ -38,10 +50,46 @@ public class QuackAttackTeleOp11635 extends LinearOpMode{
         SampleMecanumDrive drive = robot.drive;
         //Init finished//
 
+        StateMachine machine = new StateMachineBuilder()
+                .state(States.Idle)
+                .onEnter(()->robot.StopIntake())
+                .onEnter(()->robot.MoveDumpServo(Robot.DumpServoState.IDLE))
+                .loop(()->robot.MoveLift(Lift.LiftState.Down))
+                .transition(()->gamepad2.right_trigger>0.4,States.Intaking)
+                .transition(()->gamepad2.a,States.LiftingMid)
+                .transition(()->gamepad2.b,States.LiftingUp)
+
+                .state(States.Intaking)
+                .onEnter(()->robot.Intake())
+                .onEnter(()->robot.MoveDumpServo(Robot.DumpServoState.IDLE))
+                .loop(()->robot.MoveLift(Lift.LiftState.Down))
+                .transition(()->gamepad2.right_trigger<0.4,States.Idle)
+
+                .state(States.LiftingMid)
+                .loop(()->robot.MoveLift(Lift.LiftState.Middle))
+                .transition(()-> gamepad2.y,States.Scroring)
+                .transition(()->!gamepad2.a,States.Idle)
+
+                .state(States.LiftingUp)
+                .loop(()->robot.MoveLift(Lift.LiftState.Up))
+                .transition(()-> gamepad2.y,States.Scroring)
+                .transition(()->!gamepad2.b,States.Idle)
+
+                .state(States.Scroring)
+                .onEnter(()->robot.MoveLift(Lift.LiftState.Stop))
+                .onEnter(()->robot.MoveDumpServo(Robot.DumpServoState.Scoring))
+                .transitionTimed(1,States.Idle)
+
+                .build();
+
         waitForStart();
 
+        machine.start();
         while (opModeIsActive()){
+
+            machine.update();
             drive.updatePoseEstimate();
+
             Pose2d poseEstimate = drive.getPoseEstimate();
             Vector2d input = new Vector2d(
                     -gamepad1.left_stick_y,
@@ -56,50 +104,21 @@ public class QuackAttackTeleOp11635 extends LinearOpMode{
                     )
             );
 
-            if (gamepad2.right_trigger>0.4){
-                Intake.setPower(1);
-                Intake2.setPower(1);
-            }else if(gamepad2.left_trigger>0.4){
-                Intake.setPower(-1);
-                Intake2.setPower(-1);
-            }
-
-            if (gamepad2.right_bumper){
-                RightLift.setPower(-1);
-                //LeftLift.setPower(1);
-                //pidController.LoopPidf();//when b pressed hold position at 800 ticks
-            }else if(gamepad2.left_bumper){
-                RightLift.setPower(1);
-                //LeftLift.setPower(-1);
-            }
-
-            if(gamepad2.b){
-                //BucketLeft.setPosition(1);//change
-                //BucketRight.setPosition(-1);//change
-            }else if(gamepad2.x){
-                //BucketLeft.setPosition(-1);//change
-                //BucketRight.setPosition(1);//change
-            }
-            if(gamepad2.a){
-                //OpenBucket.setPosition(-1);//change if needed
-            }else if(gamepad2.y){
-                //OpenBucket.setPosition(0);//change if needed
-            }
-
-
             Pose2d ResetFieldCentric = new Pose2d(poseEstimate.getX(),poseEstimate.getY(),Math.toRadians(0));
             if (gamepad1.right_stick_button){
                 drive.setPoseEstimate(ResetFieldCentric);//Resets the field centric drive when the right stick pressed
             }
 
-            Intake.setPower(0);
-            Intake2.setPower(0);
-            RightLift.setPower(0);
-            //LeftLift.setPower(0);
+            //Stop Intake and lift
+            robot.StopIntake();
+            robot.MoveLift(Lift.LiftState.Stop);
 
             telemetry.addData("Heading",poseEstimate.getHeading());
             telemetry.addData("X",poseEstimate.getX());
             telemetry.addData("Y",poseEstimate.getY());
+            telemetry.addData("IntakeState",robot.currentIntakeState);
+            telemetry.addData("LiftState",robot.currentLiftPose);
+            telemetry.addData("DumpState",robot.DumpState);
             telemetry.update();
         }
    }

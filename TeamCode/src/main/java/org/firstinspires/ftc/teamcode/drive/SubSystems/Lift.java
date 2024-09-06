@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.drive.SubSystems;
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.drive.opmode.PID;
 
@@ -11,7 +12,8 @@ public class Lift {
     public enum LiftState {
         Down,
         Middle,
-        Up
+        Up,
+        Stop
     }
 
     PID Down_LiftpidController = new PID();
@@ -23,6 +25,8 @@ public class Lift {
     PID Up_LiftpidController2 = new PID();
 
     LiftState currentLiftState;
+    public DcMotorEx LiftMotor;
+    public DcMotorEx LiftMotor2;
     public void Init(){
         Down_LiftpidController.BeforeInitPid(0,1,1,1,"Lift",1800,0);//all the vairables for the pidcontroller
         Down_LiftpidController.InitPid();//Init pidcontroller
@@ -39,6 +43,8 @@ public class Lift {
         Up_LiftpidController2.InitPid();//Init pidcontroller
         currentLiftState = LiftState.Down;
 
+        LiftMotor = hardwareMap.get(DcMotorEx.class, "LiftMotor");
+        LiftMotor2 = hardwareMap.get(DcMotorEx.class, "LiftMotor2");
 
     }
     public void STARTlIFT(LiftState state){
@@ -61,6 +67,9 @@ public class Lift {
                 currentLiftState = LiftState.Up;
                 break;
 
+            case Stop:
+                LiftMotor.setPower(0);
+                LiftMotor2.setPower(0);
 
         }
     }

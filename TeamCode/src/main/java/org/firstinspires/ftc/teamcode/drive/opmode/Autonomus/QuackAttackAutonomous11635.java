@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.sfdev.assembly.state.StateMachine;
 
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.drive.SubSystems.Lift;
 import org.firstinspires.ftc.teamcode.drive.SubSystems.Robot;
 import org.firstinspires.ftc.teamcode.drive.opmode.PID;
 import org.firstinspires.ftc.teamcode.drive.opmode.PidF;
@@ -23,15 +24,14 @@ import com.sfdev.assembly.state.*;
 public class QuackAttackAutonomous11635 extends LinearOpMode {
     //TODO CHANGE THE STATES AS MUCH AS YOU NEED
     // This enum defines our "state"
-    // This is essentially just defines the possible steps our program will take
     enum State {
-        TRAJECTORY_1,   // First, follow a splineTo trajectory and go to pixel stack
+        TRAJECTORY_1,   // go to pixel stack
         TRAJECTORY_2,   // Then start intake and go forward
         WAIT_1,         // Then we want to wait for the intake to intake and then stop it
-        TRAJECTORY_3,   // Then, we follow another lineToLinearHeading trajectory and go to the backdrop
-        TRAJECTORY4,    // Then we're gonna strafeRight
-        TRAJECTORY5,    // Finally, we're gonna go forward again again and park in the parking zone
-        IDLE,            // Our bot will enter the IDLE state when done
+        TRAJECTORY_3,   //  go to the backdrop while lifting the lift, when we are in the backdrop we want to score
+        TRAJECTORY4,    // Then we're gonna strafeRight and return the dump servo to his normal position
+        TRAJECTORY5,    // we're gonna park in the parking zone
+        IDLE,            // Our bot will enter the IDLE until he starts
         STOP             //stop and restart lift
     }
 
@@ -43,14 +43,14 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
     Pose2d startPose = new Pose2d(-40, -64, Math.toRadians(0));
 
     Robot robot = new Robot();
+    ElapsedTime waitTimer1;
+
     @Override
     public void runOpMode() throws InterruptedException {
 
         robot.InitRobot(startPose);
         SampleMecanumDrive drive = robot.drive;
         //TODO:MAKE SURE TO MAKE LIFT DOWN AND INTAKE UP IN THE END OF THE AUTO
-
-
 
         //TODO Let's define our trajectories
         Trajectory trajectory1 = drive.trajectoryBuilder(startPose)
@@ -63,7 +63,7 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
                 .build();
 
         double waitTime1 = 1;
-        ElapsedTime waitTimer1 = new ElapsedTime();
+        waitTimer1 = new ElapsedTime();
 
         //double turnAngle1 = Math.toRadians(-270);
         // We have to define a new end pose because we can't just call trajectory2.end()
@@ -84,6 +84,7 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
                 .forward(10)
                 .build();
 
+        //Define The StateMachine
         StateMachine machine = new StateMachineBuilder()
                 .state(State.IDLE)
                 .transition(()->isStarted(),State.TRAJECTORY_1)
@@ -93,8 +94,7 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
                 .transition(()->!drive.isBusy(),State.TRAJECTORY_2)
 
                 .state(State.TRAJECTORY_2)
-                .onEnter(()->Intake.setPower(1))
-                .onEnter(()->Intake2.setPower(1))
+                .onEnter(()->robot.Intake())
                 .onEnter(()->drive.followTrajectoryAsync(trajectory2))
                 .transition(()->!drive.isBusy(),State.WAIT_1,()->waitTimer1.reset())
 
@@ -102,14 +102,15 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
                 .transition(()->waitTimer1.seconds() >= waitTime1,State.TRAJECTORY_3)
 
                 .state(State.TRAJECTORY_3)
-                .onEnter(()->Intake.setPower(0))
-                .onEnter(()->Intake2.setPower(0))
+                .onEnter(()->robot.StopIntake())
                 .onEnter( ()->drive.followTrajectoryAsync(trajectory3))
-                .loop(()->UP_LiftpidController.LoopPid())
+                .loop(()->robot.MoveLift(Lift.LiftState.Up))
+                .onExit(()->robot.MoveDumpServo(Robot.DumpServoState.Scoring))
                 .transition(()->!drive.isBusy(),State.TRAJECTORY4)
 
                 .state(State.TRAJECTORY4)
                 .onEnter(()->drive.followTrajectoryAsync(trajectory4))
+                .onEnter(()->robot.MoveDumpServo(Robot.DumpServoState.IDLE))
                 .transition(()->!drive.isBusy(),State.TRAJECTORY5)
 
                 .state(State.TRAJECTORY5)
@@ -117,7 +118,7 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
                 .transition(()->!drive.isBusy(),State.STOP)
 
                 .state(State.STOP)
-                .onEnter(()->Down_LiftpidController.LoopPid())
+                .onEnter(()->robot.MoveLift(Lift.LiftState.Down))
 
                 .build();
 
@@ -130,6 +131,7 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
 
         while (opModeIsActive() && !isStopRequested()) {
 
+            //Update the stateMachine
             machine.update();
             //update drive continuously in the background, regardless of state
             drive.update();
