@@ -12,6 +12,8 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+
+import org.firstinspires.ftc.teamcode.drive.SubSystems.Robot;
 import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Vector;
@@ -27,24 +29,13 @@ import org.firstinspires.ftc.teamcode.drive.opmode.PoseStorage;
 
 @TeleOp(name = "Best TeleOp11635")
 public class QuackAttackTeleOp11635 extends LinearOpMode{
-    //PidF pidController = new PidF();
+
+    Robot robot = new Robot();
     @Override
     public void runOpMode(){
         //Init//
-
-        //pidController.BeforeInitPidf(800,1,1,1,0.05,"LinearSlide",1800,0);//all the vairables for the pidcontroller
-        //pidController.InitPidf();//Init pidfcontroller
-        DcMotor Intake = hardwareMap.get(DcMotor.class,"intake");
-        DcMotor Intake2 = hardwareMap.get(DcMotor.class,"intakeWheel");
-        //DcMotor LeftLift = hardwareMap.get(DcMotor.class,"LiftL");//change
-        DcMotor RightLift = hardwareMap.get(DcMotor.class,"liftL");//change
-        //Servo BucketLeft = hardwareMap.get(Servo.class,"BucketLeft");//change
-        //Servo BucketRight = hardwareMap.get(Servo.class,"BucketRight");//change
-        //Servo OpenBucket = hardwareMap.get(Servo.class,"OpenBucket");//change
-        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
-        drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        drive.setPoseEstimate(PoseStorage.currentPose);
-
+        robot.InitRobot(PoseStorage.currentPose);
+        SampleMecanumDrive drive = robot.drive;
         //Init finished//
 
         waitForStart();

@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.drive.opmode.Autonomus;
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
+
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
@@ -8,11 +10,14 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.sfdev.assembly.state.StateMachine;
 
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.drive.SubSystems.Robot;
 import org.firstinspires.ftc.teamcode.drive.opmode.PID;
 import org.firstinspires.ftc.teamcode.drive.opmode.PidF;
 import org.firstinspires.ftc.teamcode.drive.opmode.PoseStorage;
+import com.sfdev.assembly.state.*;
 
 @Autonomous(name = "Auto1")
 public class QuackAttackAutonomous11635 extends LinearOpMode {
@@ -26,7 +31,8 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
         TRAJECTORY_3,   // Then, we follow another lineToLinearHeading trajectory and go to the backdrop
         TRAJECTORY4,    // Then we're gonna strafeRight
         TRAJECTORY5,    // Finally, we're gonna go forward again again and park in the parking zone
-        IDLE            // Our bot will enter the IDLE state when done
+        IDLE,            // Our bot will enter the IDLE state when done
+        STOP             //stop and restart lift
     }
 
     // We define the current state we're on
@@ -36,25 +42,15 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
     // TODO Define our start pose
     Pose2d startPose = new Pose2d(-40, -64, Math.toRadians(0));
 
-    PID UP_LiftpidController = new PID();
-    PID Down_LiftpidController = new PID();
+    Robot robot = new Robot();
     @Override
     public void runOpMode() throws InterruptedException {
-        //TODO Initialize our lift and intake
-        UP_LiftpidController.BeforeInitPid(6000,1,1,1,"Lift",1800,0);//all the vairables for the pidcontroller
-        UP_LiftpidController.InitPid();//Init pidcontroller
 
-        Down_LiftpidController.BeforeInitPid(0,1,1,1,"Lift",1800,0);//all the vairables for the pidcontroller
-        Down_LiftpidController.InitPid();//Init pidcontroller
+        robot.InitRobot(startPose);
+        SampleMecanumDrive drive = robot.drive;
+        //TODO:MAKE SURE TO MAKE LIFT DOWN AND INTAKE UP IN THE END OF THE AUTO
 
-        DcMotor Intake = hardwareMap.get(DcMotor.class,"intake");
-        DcMotor Intake2 = hardwareMap.get(DcMotor.class,"intakeWheel");
 
-        // Initialize SampleMecanumDrive
-        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
-
-        // Set inital pose
-        drive.setPoseEstimate(startPose);
 
         //TODO Let's define our trajectories
         Trajectory trajectory1 = drive.trajectoryBuilder(startPose)
@@ -62,16 +58,13 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
                 .build();
 
         // Second trajectory
-        // Ensure that we call trajectory1.end() as the start for this one
         Trajectory trajectory2 = drive.trajectoryBuilder(trajectory1.end())
                 .forward(5)
                 .build();
 
-        // Define a 1 second wait time
         double waitTime1 = 1;
         ElapsedTime waitTimer1 = new ElapsedTime();
 
-        // For turning :Define the angle to turn at
         //double turnAngle1 = Math.toRadians(-270);
         // We have to define a new end pose because we can't just call trajectory2.end()
         // Since there was a point turn before that
@@ -91,103 +84,60 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
                 .forward(10)
                 .build();
 
+        StateMachine machine = new StateMachineBuilder()
+                .state(State.IDLE)
+                .transition(()->isStarted(),State.TRAJECTORY_1)
+
+                .state(State.TRAJECTORY_1)
+                .onEnter( ()->drive.followTrajectoryAsync(trajectory1))
+                .transition(()->!drive.isBusy(),State.TRAJECTORY_2)
+
+                .state(State.TRAJECTORY_2)
+                .onEnter(()->Intake.setPower(1))
+                .onEnter(()->Intake2.setPower(1))
+                .onEnter(()->drive.followTrajectoryAsync(trajectory2))
+                .transition(()->!drive.isBusy(),State.WAIT_1,()->waitTimer1.reset())
+
+                .state(State.WAIT_1)
+                .transition(()->waitTimer1.seconds() >= waitTime1,State.TRAJECTORY_3)
+
+                .state(State.TRAJECTORY_3)
+                .onEnter(()->Intake.setPower(0))
+                .onEnter(()->Intake2.setPower(0))
+                .onEnter( ()->drive.followTrajectoryAsync(trajectory3))
+                .loop(()->UP_LiftpidController.LoopPid())
+                .transition(()->!drive.isBusy(),State.TRAJECTORY4)
+
+                .state(State.TRAJECTORY4)
+                .onEnter(()->drive.followTrajectoryAsync(trajectory4))
+                .transition(()->!drive.isBusy(),State.TRAJECTORY5)
+
+                .state(State.TRAJECTORY5)
+                .onEnter(()->drive.followTrajectoryAsync(trajectory5))
+                .transition(()->!drive.isBusy(),State.STOP)
+
+                .state(State.STOP)
+                .onEnter(()->Down_LiftpidController.LoopPid())
+
+                .build();
+
 
         waitForStart();
 
         if (isStopRequested()) return;
 
-        // Set the current state to TRAJECTORY_1, our first step
-        // Then have it follow that trajectory
-        // Make sure you use the async version of the commands
-        // Otherwise it will be blocking and pause the program here until the trajectory finishes
-        currentState = State.TRAJECTORY_1;
-        drive.followTrajectoryAsync(trajectory1);
+        machine.start();// starts the state machine so we are in the first state
 
         while (opModeIsActive() && !isStopRequested()) {
-            // Our state machine logic
-            // You can have multiple switch statements running together for multiple state machines
-            // in parallel. This is the basic idea for subsystems and commands.
 
-            // We essentially define the flow of the state machine through this switch statement
-            switch (currentState) {
-                //TODO ADJUST THE STATES AND THE ACTIONS IN IT
-                case TRAJECTORY_1:
-                    // Check if the drive class isn't busy
-                    // `isBusy() == true` while it's following the trajectory
-                    // Once `isBusy() == false`, the trajectory follower signals that it is finished
-                    // We move on to the next state
-                    // Make sure we use the async follow function
-                    if (!drive.isBusy()) {
-                        //Going to state "TRAJECTORY_2" and starting intake and following Trajectory2
-                        currentState = State.TRAJECTORY_2;
-                        Intake.setPower(1);
-                        Intake2.setPower(1);
-                        drive.followTrajectoryAsync(trajectory2);
-                    }
-                    break;
-                case TRAJECTORY_2:
-                    // Check if the drive class is busy following  trajectory2
-                    // Move on to the next state, WAIT_1, once finished
-                    if (!drive.isBusy()) {
-                        currentState = State.WAIT_1;
-
-                        // Start the wait timer once we switch to the next state
-                        // This is so we can track how long we've been in the WAIT_1 state
-                        waitTimer1.reset();
-                    }
-                    break;
-                case WAIT_1:
-                    // Check if the timer has finished
-                    // If it did stop the intake and  move onto the next state, TRAJECTORY_3
-                    if (waitTimer1.seconds() >= waitTime1) {
-                        Intake.setPower(0);
-                        Intake2.setPower(0);
-                        currentState = State.TRAJECTORY_3;
-                        drive.followTrajectoryAsync(trajectory3);
-                    }
-                    break;
-                case TRAJECTORY_3:
-                    // Check if the drive class is busy following trajectory3
-                    // If not, move onto the next state, TRAJECTORY4
-                    UP_LiftpidController.LoopPid();//lifting the lift to high level while it still follows trajectory3
-                    if (!drive.isBusy()) {
-                        currentState = State.TRAJECTORY4;
-                        drive.followTrajectoryAsync(trajectory4);
-                    }
-                    break;
-                case TRAJECTORY4:
-                    // Check if the drive class is busy following trajectory4
-                    // If not, move onto the next state, TRAJECTORY5
-                    if (!drive.isBusy()) {
-                        currentState = State.TRAJECTORY5;
-                        drive.followTrajectoryAsync(trajectory5);
-                    }
-                    break;
-                case TRAJECTORY5:
-                    // Check if the drive class is busy following trajectory5
-                    // If not, move onto the next state, IDLE
-                    // We are done with the program
-                    if (!drive.isBusy()) {
-                        currentState = State.IDLE;
-                    }
-                    break;
-                case IDLE:
-                    // Do nothing in IDLE
-                    // currentState does not change once in IDLE
-                    // This concludes the autonomous program
-                    Down_LiftpidController.LoopPid();//Keep the lift at it starting position while finished auto
-                    break;
-            }
-
-            // Anything outside of the switch statement will run independent of the currentState
-
-            // We update drive continuously in the background, regardless of state
+            machine.update();
+            //update drive continuously in the background, regardless of state
             drive.update();
 
             // Read pose
             Pose2d poseEstimate = drive.getPoseEstimate();
 
-            // Continually write pose to `PoseStorage`
+            //Sending pose to poseStroage
             PoseStorage.currentPose = poseEstimate;
 
             // Print pose to telemetry
