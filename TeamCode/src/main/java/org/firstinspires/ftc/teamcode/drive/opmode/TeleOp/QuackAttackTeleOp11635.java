@@ -35,10 +35,10 @@ import com.sfdev.assembly.state.*;
 public class QuackAttackTeleOp11635 extends LinearOpMode{
 
     public enum States{
-        Idle, // pid for moving the lift is down and not intaking and dump reseted can Intake and can MoveLift
+        Idle, // pid for moving the lift is down and STOP intaking and dump reseted can Intake and can MoveLift
         Intaking, // Start Intaking and pid for moving the lift down cant Move Lift(rt)
-        LiftingMid, // moving the lift to Middle and cant intake but can score(a)
-        LiftingUp, // moving the lift to Up and cant intake but can score(b)
+        LiftingMid, // moving the lift to Middle and cant intake but can score and move lift(a)
+        LiftingUp, // moving the lift to Up and cant intake but can score and move lift(b)
         Scroring //Dumping waiting a sec and going back to idle cant move lift or intake(y)
 
     }
@@ -52,33 +52,33 @@ public class QuackAttackTeleOp11635 extends LinearOpMode{
 
         StateMachine machine = new StateMachineBuilder()
                 .state(States.Idle)
-                .onEnter(()->robot.StopIntake())
+                .onEnter(()->robot.intake.StopIntaking())
                 .onEnter(()->robot.MoveDumpServo(Robot.DumpServoState.IDLE))
-                .loop(()->robot.MoveLift(Lift.LiftState.Down))
-                .transition(()->gamepad2.right_trigger>0.4,States.Intaking)
+                .loop(()->robot.lift.STARTlIFT(Lift.LiftState.Down))
+                .transition(()->gamepad2.right_trigger>0.4 && robot.lift.currentLiftPose == Lift.LiftState.Down,States.Intaking)
                 .transition(()->gamepad2.a,States.LiftingMid)
                 .transition(()->gamepad2.b,States.LiftingUp)
 
                 .state(States.Intaking)
-                .onEnter(()->robot.Intake())
+                .onEnter(()->robot.intake.StartIntaking())
                 .onEnter(()->robot.MoveDumpServo(Robot.DumpServoState.IDLE))
-                .loop(()->robot.MoveLift(Lift.LiftState.Down))
+                .loop(()->robot.lift.STARTlIFT(Lift.LiftState.Down))
                 .transition(()->gamepad2.right_trigger<0.4,States.Idle)
 
                 .state(States.LiftingMid)
-                .loop(()->robot.MoveLift(Lift.LiftState.Middle))
+                .loop(()->robot.lift.STARTlIFT(Lift.LiftState.Middle))
                 .transition(()-> gamepad2.y,States.Scroring)
                 .transition(()->gamepad2.a,States.Idle)
                 .transition(()->gamepad2.b,States.LiftingUp)
 
                 .state(States.LiftingUp)
-                .loop(()->robot.MoveLift(Lift.LiftState.Up))
+                .loop(()->robot.lift.STARTlIFT(Lift.LiftState.Up))
                 .transition(()-> gamepad2.y,States.Scroring)
                 .transition(()->gamepad2.b,States.Idle)
                 .transition(()->gamepad2.a,States.LiftingMid)
 
                 .state(States.Scroring)
-                .onEnter(()->robot.MoveLift(Lift.LiftState.Stop))
+                .onEnter(()->robot.lift.STARTlIFT(Lift.LiftState.Stop))
                 .onEnter(()->robot.MoveDumpServo(Robot.DumpServoState.Scoring))
                 .transitionTimed(1,States.Idle)
 
@@ -112,14 +112,14 @@ public class QuackAttackTeleOp11635 extends LinearOpMode{
             }
 
             //Stop Intake and lift
-            robot.StopIntake();
-            robot.MoveLift(Lift.LiftState.Stop);
+            robot.intake.StartIntaking();
+            robot.lift.STARTlIFT(Lift.LiftState.Stop);
 
             telemetry.addData("Heading",poseEstimate.getHeading());
             telemetry.addData("X",poseEstimate.getX());
             telemetry.addData("Y",poseEstimate.getY());
-            telemetry.addData("IntakeState",robot.currentIntakeState);
-            telemetry.addData("LiftState",robot.currentLiftPose);
+            telemetry.addData("IntakeState",robot.intake.currentIntakeState);
+            telemetry.addData("LiftState",robot.lift.currentLiftPose);
             telemetry.addData("DumpState",robot.DumpState);
             telemetry.update();
         }

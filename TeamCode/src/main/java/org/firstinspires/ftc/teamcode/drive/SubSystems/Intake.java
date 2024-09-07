@@ -14,7 +14,7 @@ public class Intake {
         NotIntaking,
         Intaking
     }
-    IntakeState currentIntakeState;
+    public IntakeState currentIntakeState;
     public void Init(){
         Intake  = hardwareMap.get(DcMotor.class,"intake");
         Intake2 = hardwareMap.get(DcMotor.class,"intakeWheel");

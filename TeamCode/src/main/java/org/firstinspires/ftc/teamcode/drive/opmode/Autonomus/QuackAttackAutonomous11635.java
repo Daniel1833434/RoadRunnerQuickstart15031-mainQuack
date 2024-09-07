@@ -92,7 +92,7 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
                 .transition(()->!drive.isBusy(),State.TRAJECTORY_2)
 
                 .state(State.TRAJECTORY_2)
-                .onEnter(()->robot.Intake())
+                .onEnter(()->robot.intake.StartIntaking())
                 .onEnter(()->drive.followTrajectoryAsync(trajectory2))
                 .transition(()->!drive.isBusy(),State.WAIT_1)
 
@@ -100,9 +100,9 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
                 .transitionTimed(2,State.TRAJECTORY_3)
 
                 .state(State.TRAJECTORY_3)
-                .onEnter(()->robot.StopIntake())
+                .onEnter(()->robot.intake.StopIntaking())
                 .onEnter( ()->drive.followTrajectoryAsync(trajectory3))
-                .loop(()->robot.MoveLift(Lift.LiftState.Up))
+                .loop(()->robot.lift.STARTlIFT(Lift.LiftState.Up))
                 .onExit(()->robot.MoveDumpServo(Robot.DumpServoState.Scoring))
                 .transition(()->!drive.isBusy(),State.TRAJECTORY4)
 
@@ -116,7 +116,8 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
                 .transition(()->!drive.isBusy(),State.STOP)
 
                 .state(State.STOP)
-                .onEnter(()->robot.MoveLift(Lift.LiftState.Down))
+                .onEnter(()->robot.lift.STARTlIFT(Lift.LiftState.Down))
+                .onEnter(()->robot.intake.StopIntaking())
 
                 .build();
 

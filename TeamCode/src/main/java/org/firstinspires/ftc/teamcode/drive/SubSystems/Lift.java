@@ -24,7 +24,8 @@ public class Lift {
     PID Middle_LiftpidController2 = new PID();
     PID Up_LiftpidController2 = new PID();
 
-    LiftState currentLiftState;
+    public LiftState currentLiftTarget;
+    public LiftState currentLiftPose;
     public DcMotorEx LiftMotor;
     public DcMotorEx LiftMotor2;
     public void Init(){
@@ -41,7 +42,8 @@ public class Lift {
         Middle_LiftpidController2.InitPid();//Init pidcontroller
         Up_LiftpidController2.BeforeInitPid(6000,1,1,1,"Lift2",1800,0);//all the vairables for the pidcontroller
         Up_LiftpidController2.InitPid();//Init pidcontroller
-        currentLiftState = LiftState.Down;
+        currentLiftTarget = LiftState.Down;
+        currentLiftPose = LiftState.Down;
 
         LiftMotor = hardwareMap.get(DcMotorEx.class, "LiftMotor");
         LiftMotor2 = hardwareMap.get(DcMotorEx.class, "LiftMotor2");
@@ -52,19 +54,28 @@ public class Lift {
             case Down:
                 Down_LiftpidController.LoopPid();
                 Down_LiftpidController2.LoopPid();
-                currentLiftState = LiftState.Down;
+                currentLiftTarget = LiftState.Down;
+                if(LiftMotor.getCurrentPosition() <75){
+                    currentLiftPose =LiftState.Down;
+                }
                 break;
 
             case Middle:
                 Middle_LiftpidController.LoopPid();
                 Middle_LiftpidController2.LoopPid();
-                currentLiftState = LiftState.Middle;
+                currentLiftTarget = LiftState.Middle;
+                if(LiftMotor.getCurrentPosition() <3075 || LiftMotor.getCurrentPosition()>2925){
+                    currentLiftPose =LiftState.Middle;
+                }
                 break;
 
             case Up:
                 Up_LiftpidController.LoopPid();
                 Up_LiftpidController2.LoopPid();
-                currentLiftState = LiftState.Up;
+                currentLiftTarget = LiftState.Up;
+                if(LiftMotor.getCurrentPosition() <6075 || LiftMotor.getCurrentPosition()>5925){
+                    currentLiftPose =LiftState.Up;
+                }
                 break;
 
             case Stop:
