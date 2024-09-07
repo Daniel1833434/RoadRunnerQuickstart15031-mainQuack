@@ -68,12 +68,14 @@ public class QuackAttackTeleOp11635 extends LinearOpMode{
                 .state(States.LiftingMid)
                 .loop(()->robot.MoveLift(Lift.LiftState.Middle))
                 .transition(()-> gamepad2.y,States.Scroring)
-                .transition(()->!gamepad2.a,States.Idle)
+                .transition(()->gamepad2.a,States.Idle)
+                .transition(()->gamepad2.b,States.LiftingUp)
 
                 .state(States.LiftingUp)
                 .loop(()->robot.MoveLift(Lift.LiftState.Up))
                 .transition(()-> gamepad2.y,States.Scroring)
-                .transition(()->!gamepad2.b,States.Idle)
+                .transition(()->gamepad2.b,States.Idle)
+                .transition(()->gamepad2.a,States.LiftingMid)
 
                 .state(States.Scroring)
                 .onEnter(()->robot.MoveLift(Lift.LiftState.Stop))

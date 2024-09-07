@@ -62,8 +62,6 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
                 .forward(5)
                 .build();
 
-        double waitTime1 = 1;
-        waitTimer1 = new ElapsedTime();
 
         //double turnAngle1 = Math.toRadians(-270);
         // We have to define a new end pose because we can't just call trajectory2.end()
@@ -96,10 +94,10 @@ public class QuackAttackAutonomous11635 extends LinearOpMode {
                 .state(State.TRAJECTORY_2)
                 .onEnter(()->robot.Intake())
                 .onEnter(()->drive.followTrajectoryAsync(trajectory2))
-                .transition(()->!drive.isBusy(),State.WAIT_1,()->waitTimer1.reset())
+                .transition(()->!drive.isBusy(),State.WAIT_1)
 
                 .state(State.WAIT_1)
-                .transition(()->waitTimer1.seconds() >= waitTime1,State.TRAJECTORY_3)
+                .transitionTimed(2,State.TRAJECTORY_3)
 
                 .state(State.TRAJECTORY_3)
                 .onEnter(()->robot.StopIntake())
