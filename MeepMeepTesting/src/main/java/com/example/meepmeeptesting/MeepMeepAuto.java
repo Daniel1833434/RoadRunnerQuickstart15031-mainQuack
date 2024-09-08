@@ -6,6 +6,12 @@ import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
+import java.awt.Image;
+import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
+
 enum Auto {
     Auto1,
     Auto2,
@@ -14,7 +20,9 @@ enum Auto {
     Auto5
 }
 
+
 public class MeepMeepAuto {
+
     public static final Auto auto  = Auto.Auto1;//Select which auto
     public static final double Delay = 0.5;
     public static final double MaxVel = 60;
@@ -44,7 +52,10 @@ public class MeepMeepAuto {
 
                 break;
         }
-        meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_JUICE_DARK)
+        Image img= null;
+        try{img = ImageIO.read(new File("IntoTheDeep.png"));}
+        catch (IOException e) {}
+        meepMeep.setBackground(img)
                 .setDarkMode(false)
                 .setBackgroundAlpha(0.95f)
                 .addEntity(myBot)
